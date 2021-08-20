@@ -29,7 +29,7 @@ class CustomerController extends Controller
 
         return response()->json([
             "msg" => "User $request->userName is created successfully!"
-        ], 201);
+        ], 200);
     }
 
     public function getUserByName($name)
