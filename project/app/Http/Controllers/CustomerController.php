@@ -2,56 +2,123 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class CustomerController extends Controller
 {
 
     public function createUser(Request $request)
     {
-        DB::table('customers')->insert([
-            'userName' => $request->userName,
-            'phone' => $request->phone,
-            'mail' => $request->mail,
-        ]);
+        $rules = array(
+            "userName"=> "required|min:2|max:25",
+            "mail" => "required|email",
+            "phone" => "required|unique:customers|digits:10",
+        );
 
-        echo "User Created Successfully";
+        $validator = Validator::make($request->all(), $rules);
+
+        if($validator->fails())
+        {
+            return response()->json($validator->errors(), 400);
+        }
+
+        $user = Customer::create(['userName'=>$request->userName, 'phone'=>$request->phone, 'mail' =>$request->mail]);
+
+        return response()->json([
+            "msg" => "User $request->userName is created successfully!"
+        ], 201);
     }
 
     public function getUserByName($name)
     {
-        return DB::table('customers')->where('userName', $name).get();
+        $name = strtolower($name);
+        if (Customer::where('userName', $name)->exists()) {
+            $user = Customer::where('userName', $name)->get();
+            return response($user, 200);
+        } else {
+            return response()->json([
+                "message" => "Username doesn't exist!"
+            ], 404);
+        }
+
     }
 
     public function getUserByMail($mail)
     {
-        return DB::table('customers')->where('mail', $mail).get();
+        $mail = strtolower($mail);
+        if (Customer::where('mail', $mail)->exists()) {
+            $user = Customer::where('mail', $mail)->get();
+            return response($user, 200);
+        } else {
+            return response()->json([
+                "message" => "User email doesn't exist!"
+            ], 404);
+        }
     }
 
     public function getUserByPhone($phone)
     {
-        return DB::table('customers')->where('phone', $phone).get();
+        if (Customer::where('phone', $phone)->exists()) {
+            $user = Customer::where('phone', $phone)->get();
+            return response($user, 200);
+        } else {
+            return response()->json([
+                "message" => "User phone doesn't exist!"
+            ], 404);
+        }
     }
 
     public function getUsers()
     {
-        return DB::table('customers').get();
+        $users = Customer::get();
+        return response($users, 200);
     }
 
     public function deleteUserByMail($mail)
     {
-        DB::table('customers')->where('mail', $mail)->delete();
+        $mail = strtolower($mail);
+        if(Customer::where('mail', $mail)->exists()){
+            DB::table('customers')->where('mail',$mail)->delete();
+            return response()->json([
+                "message" => "User successfully deleted!"
+            ], 200);
+        } else {
+            return response()->json([
+                "message" => "User mail doesn't exist!!"
+            ], 404);
+        }
     }
 
     public function deleteUserByPhone($phone)
     {
-        DB::table('customers')->where('phone', $phone)->delete();
+        if(Customer::where('phone', $phone)->exists()){
+            DB::table('customers')->where('phone',$phone)->delete();
+            return response()->json([
+                "message" => "User successfully deleted!"
+            ], 200);
+        } else {
+            return response()->json([
+                "message" => "User phone doesn't exist!!"
+            ], 404);
+        }
     }
 
     public function deleteUserByName($name)
     {
-        DB::table('customers')->where('userName', $name)->delete();
+        $name = strtolower($name);
+        if(Customer::where('userName', $name)->exists()){
+            DB::table('customers')->where('userName',$name)->delete();
+            return response()->json([
+                "message" => "User successfully deleted!"
+            ], 200);
+        } else {
+            return response()->json([
+                "message" => "User name doesn't exist!!"
+            ], 404);
+        }
     }
 
 }
